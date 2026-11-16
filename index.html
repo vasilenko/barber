@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Цирюльня</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@500;700&family=Yeseva+One&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #1c1218;
+      --wall: #2b2230;
+      --paper: #efe3cf;
+      --muted: #b5a5b0;
+      --gold: #dba848;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--wall);
+      color: var(--paper);
+      font: 500 1.125rem/1.4 "Alegreya Sans", "Trebuchet MS", sans-serif;
+    }
+
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: clamp(20px, 4vw, 48px) clamp(16px, 4vw, 40px) 56px;
+    }
+
+    /* Картинка и образцы цвета помещаются на один экран при любых пропорциях картинки. */
+    .board {
+      max-width: max(320px, calc((100vh - 300px) * var(--ratio, 1.5)));
+    }
+
+    .top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px 24px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0;
+      font: 400 clamp(2rem, 5vw, 3.25rem)/1 "Yeseva One", Georgia, serif;
+      letter-spacing: 0.01em;
+    }
+
+    .upload {
+      position: relative;
+      padding: 6px 16px 8px;
+      border: 3px solid var(--ink);
+      border-radius: 6px;
+      box-shadow: 4px 4px 0 var(--ink);
+      background: var(--paper);
+      color: var(--ink);
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .upload:hover { background: #fff6e2; }
+
+    .upload:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0 var(--ink);
+    }
+
+    .upload input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .upload:has(input:focus-visible) {
+      outline: 3px solid var(--gold);
+      outline-offset: 3px;
+    }
+
+    .stage {
+      border: 4px solid var(--ink);
+      border-radius: 6px;
+      box-shadow: 8px 8px 0 var(--ink);
+      background: #7d7380;
+      overflow: hidden;
+    }
+
+    .stage canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: var(--ratio, 1.5);
+    }
+
+    .stage.is-drop {
+      outline: 4px dashed var(--gold);
+      outline-offset: 4px;
+    }
+
+    .notice {
+      margin: 20px 0 0;
+      padding: 12px 16px;
+      max-width: 70ch;
+      border: 3px solid var(--ink);
+      border-radius: 6px;
+      background: var(--paper);
+      color: var(--ink);
+    }
+
+    .notice code {
+      font-size: 0.9em;
+      overflow-wrap: anywhere;
+    }
+
+    .dyes {
+      margin: 32px 0 0;
+      padding: 0;
+      border: 0;
+    }
+
+    .dyes legend {
+      padding: 0;
+      margin-bottom: 12px;
+      color: var(--muted);
+    }
+
+    .dyes__row {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 104px));
+      gap: 8px clamp(2px, 2vw, 20px);
+      font-size: clamp(0.75rem, 3.4vw, 1.125rem);
+    }
+
+    .dye {
+      position: relative;
+      display: grid;
+      justify-items: center;
+      gap: 6px;
+      padding: 10px 0 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+      line-height: 1.15;
+    }
+
+    .dye input {
+      position: absolute;
+      inset: 0;
+      margin: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .dye svg {
+      width: clamp(44px, 12vw, 72px);
+      height: auto;
+      aspect-ratio: 1;
+      transition: transform 140ms ease-out;
+    }
+
+    .dye:hover svg { transform: translateY(-3px); }
+
+    .dye:has(input:checked) svg { transform: translateY(-6px) scale(1.08); }
+
+    .dye__name {
+      padding-bottom: 3px;
+      border-bottom: 3px solid transparent;
+    }
+
+    .dye:has(input:checked) .dye__name {
+      color: var(--gold);
+      font-weight: 700;
+      border-bottom-color: var(--gold);
+    }
+
+    .dye:has(input:focus-visible) {
+      outline: 3px solid var(--gold);
+      outline-offset: 2px;
+    }
+
+    .dyes:disabled { opacity: 0.45; }
+    .dyes:disabled .dye, .dyes:disabled .dye input { cursor: default; }
+    .dyes:disabled .dye:hover svg { transform: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .dye svg { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="board">
+      <header class="top">
+        <h1>Цирюльня</h1>
+        <label class="upload">
+          <input type="file" id="file" accept="image/*">
+          Загрузить картинку
+        </label>
+      </header>
+
+      <div class="stage" id="stage">
+        <canvas id="sheet" role="img" aria-label="Персонаж с выбранным цветом волос"></canvas>
+      </div>
+    </div>
+
+    <p id="notice" class="notice" role="alert" hidden></p>
+
+    <fieldset class="dyes" id="dyes" disabled>
+      <legend>Цвет волос</legend>
+      <div class="dyes__row" id="dyes-row"></div>
+    </fieldset>
+  </main>
+
+  <!-- Прядь для образцов цвета: тона берутся из CSS-переменных образца. -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <clipPath id="tuft-clip">
+        <path d="M9 43C5 30 11 19 21 15L18 6l12 6 5-9 6 10 11-5-3 11c8 6 11 18 6 27C47 57 17 57 9 43Z"/>
+      </clipPath>
+      <symbol id="tuft" viewBox="0 0 64 64">
+        <path d="M9 43C5 30 11 19 21 15L18 6l12 6 5-9 6 10 11-5-3 11c8 6 11 18 6 27C47 57 17 57 9 43Z" fill="var(--base)"/>
+        <ellipse cx="36" cy="60" rx="30" ry="17" fill="var(--shadow)" clip-path="url(#tuft-clip)"/>
+        <path d="M19 31c3-8 10-11 18-10" fill="none" stroke="var(--highlight)" stroke-width="5" stroke-linecap="round"/>
+        <path d="M9 43C5 30 11 19 21 15L18 6l12 6 5-9 6 10 11-5-3 11c8 6 11 18 6 27C47 57 17 57 9 43Z" fill="none" stroke="var(--ink)" stroke-width="3.5" stroke-linejoin="round"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <script src="app.js"></script>
+</body>
+</html>
